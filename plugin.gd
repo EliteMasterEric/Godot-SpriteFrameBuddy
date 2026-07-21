@@ -128,13 +128,22 @@ func open_region_editor(path:String) -> void:
 		
 		var tex_edit = TextureRegionEditor.new()
 		tex_edit.plugin = self
-		tex_edit.get_ok_button().pressed.connect(add_sprite_frame.bind(atlas_texture))
+		tex_edit.append_frame.connect(append_sprite_frame.bind(tex_edit))
+		tex_edit.get_ok_button().pressed.connect(add_sprite_frame.bind(tex_edit))
 		add_child(tex_edit)
-		tex_edit.edit(atlas_texture, )
+		tex_edit.edit(atlas_texture)
 	else:
 		print("Resource: %s" % resource)
 
-func add_sprite_frame(texture:AtlasTexture) -> void:
+func add_sprite_frame(tex_edit:TextureRegionEditor) -> void:
+	var texture:AtlasTexture = tex_edit._get_edited_object()
+	push_sprite_frame(texture)
+
+func append_sprite_frame(tex_edit:TextureRegionEditor) -> void:
+	var texture:AtlasTexture = tex_edit._get_edited_object()
+	push_sprite_frame(texture.duplicate())
+
+func push_sprite_frame(texture:AtlasTexture) -> void:
 	if current_spriteframes == null:
 		push_error("Couldn't attach to AtlasTexture for writing!")
 	

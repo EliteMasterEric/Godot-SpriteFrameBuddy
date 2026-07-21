@@ -12,6 +12,7 @@ var slice_mode_button:OptionButton
 var zoom_in:Button
 var zoom_out:Button
 var zoom_reset:Button
+var append_frame_button:Button
 var hb_grid:HBoxContainer
 var smart_style_button:OptionButton
 var smart_style_color_button:ColorPickerButton
@@ -74,6 +75,8 @@ var panner:ViewPanner
 
 static var pan_pos_cache:Dictionary[RID, Vector2] = {}
 static var pan_zoom_cache:Dictionary[RID, float] = {}
+
+signal append_frame
 
 enum SliceMode {
 	SLICE_FREE = 0,
@@ -292,7 +295,12 @@ func _build_interface() -> void:
 	_set_smart_slice_style(last_smart_style)
 	_set_smart_slice_color(last_smart_style_color)
 	
-	# Remember last position and zoom
+	append_frame_button = Button.new()
+	append_frame_button.text = "Append Frame"
+	append_frame_button.pressed.connect(func(): append_frame.emit())
+	get_ok_button().add_sibling(append_frame_button)
+	
+	# Remember last position and zoom when we exit.
 	get_ok_button().pressed.connect(_on_ok_button)
 
 func _on_ok_button() -> void:
@@ -1192,6 +1200,20 @@ func edit(p_obj:Object) -> void:
 	popup_centered_ratio(0.5)
 	request_center = true
 
+func _get_edited_object() -> Object:
+	if node_sprite_2d != null:
+		return node_sprite_2d
+	elif node_sprite_3d != null:
+		return node_sprite_3d
+	elif node_ninepatch != null:
+		return node_ninepatch
+	elif res_stylebox != null:
+		return res_stylebox
+	elif res_atlas_texture != null:
+		return res_atlas_texture
+	else:
+		return Texture2D.new()
+
 func _get_edited_object_texture() -> Texture2D:
 	if node_sprite_2d != null:
 		return node_sprite_2d.texture
@@ -1202,8 +1224,7 @@ func _get_edited_object_texture() -> Texture2D:
 	elif res_stylebox != null:
 		return res_stylebox.texture
 	elif res_atlas_texture != null:
-		var atlas = res_atlas_texture.atlas
-		return atlas
+		return res_atlas_texture.atlas
 	else:
 		return Texture2D.new()
 
