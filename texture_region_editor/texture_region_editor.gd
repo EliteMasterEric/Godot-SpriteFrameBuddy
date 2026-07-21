@@ -72,6 +72,9 @@ var request_center:bool = false
 
 var panner:ViewPanner
 
+static var pan_pos_cache:Dictionary[RID, Vector2] = {}
+static var pan_zoom_cache:Dictionary[RID, float] = {}
+
 enum SliceMode {
 	SLICE_FREE = 0,
 	SLICE_GRID = 1,
@@ -288,6 +291,14 @@ func _build_interface() -> void:
 	_set_slice_mode(last_slice_mode)
 	_set_smart_slice_style(last_smart_style)
 	_set_smart_slice_color(last_smart_style_color)
+	
+	# Remember last position and zoom
+	get_ok_button().pressed.connect(_on_ok_button)
+
+func _on_ok_button() -> void:
+	print("Remember: %.2f:%.2f" % [hscroll.value, vscroll.value])
+	pan_pos_cache.set(_get_edited_object_texture().get_rid(), Vector2(hscroll.value, vscroll.value))
+	pan_zoom_cache.set(_get_edited_object_texture().get_rid(), draw_zoom)
 
 static func label(text:String) -> Label:
 	var result = Label.new()
@@ -458,12 +469,29 @@ func _texture_overlay_draw() -> void:
 	updating_scroll = false
 
 	if request_center and hscroll.get_min() < 0:
-		hscroll.set_value((hscroll.get_min() + hscroll.get_max() - hscroll.get_page()) / 2)
-		vscroll.set_value((vscroll.get_min() + vscroll.get_max() - vscroll.get_page()) / 2)
-		# This ensures that the view is updated correctly.
-		_pan_callback.call_deferred(Vector2(1, 0), null)
-		_scroll_changed.call_deferred(0.0)
-		request_center = false
+		if pan_pos_cache.has(_get_edited_object_texture().get_rid()):
+			print("Move to target point!")
+			draw_zoom = pan_zoom_cache.get(_get_edited_object_texture().get_rid())
+			var pos = pan_pos_cache.get(_get_edited_object_texture().get_rid())
+			hscroll.value = pos.x
+			vscroll.value = pos.y
+			
+			request_center = false
+		else:
+			# Center on the whole image.
+			var center_x = (hscroll.get_min() + hscroll.get_max() - hscroll.get_page()) / 2
+			var center_y = (vscroll.get_min() + vscroll.get_max() - vscroll.get_page()) / 2
+			print("Centering view on (%.2f, %.2f)" % [center_x, center_y])
+		
+			# I wanted to add a thing to center on the current rect,
+			# but the math is SO FUCKED and I gave up and made it just remember your last position.
+		
+			hscroll.set_value(center_x)
+			vscroll.set_value(center_y)
+			# This ensures that the view is updated correctly.
+			_pan_callback.call_deferred(Vector2(1, 0), null)
+			_scroll_changed.call_deferred(0.0)
+			request_center = false
 
 	if (node_ninepatch or res_stylebox):
 		var margins:Array[int] = [0]

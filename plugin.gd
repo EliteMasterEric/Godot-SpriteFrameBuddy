@@ -1,6 +1,11 @@
 @tool
 extends EditorPlugin
 
+## The last directory we selected with the FileDialog
+static var last_atlas_path:String = ""
+## The last region we selected with the Region Editor
+static var region_cache:Dictionary[RID, Rect2]
+
 static var spriteframes_panel:Node
 static var spriteframes_addatlastexture:Button
 
@@ -101,6 +106,8 @@ func open_spritesheet_texture(callback:Callable) -> void:
 	dialog.unresizable = false
 	dialog.access = FileDialog.ACCESS_RESOURCES
 	dialog.size = Vector2(1280, 960)
+	# See: https://github.com/godotengine/godot/pull/115133
+	dialog.current_path = last_atlas_path
 	dialog.hidden_files_toggle_enabled = false
 	
 	var extensions:Array[String] = []
@@ -109,23 +116,30 @@ func open_spritesheet_texture(callback:Callable) -> void:
 	dialog.popup_exclusive_centered(self)
 
 func open_region_editor(path:String) -> void:
+	last_atlas_path = path
+	
 	var resource = load(path)
 	if is_instance_of(resource, Texture2D):
 		var atlas_texture = AtlasTexture.new()
 		atlas_texture.atlas = resource
 		atlas_texture.region = Rect2(0, 0, 16, 16)
+		if region_cache.has(atlas_texture.get_rid()):
+			atlas_texture.region = region_cache.get(atlas_texture.get_rid())
 		
 		var tex_edit = TextureRegionEditor.new()
 		tex_edit.plugin = self
 		tex_edit.get_ok_button().pressed.connect(add_sprite_frame.bind(atlas_texture))
 		add_child(tex_edit)
-		tex_edit.edit(atlas_texture)
+		tex_edit.edit(atlas_texture, )
 	else:
 		print("Resource: %s" % resource)
 
 func add_sprite_frame(texture:AtlasTexture) -> void:
 	if current_spriteframes == null:
 		push_error("Couldn't attach to AtlasTexture for writing!")
+	
+	# Remember the region we used for next time.
+	region_cache[texture.atlas.get_rid()] = texture.region
 	
 	var target = current_spriteframes
 	var target_anim = get_current_spriteframe_animation()
