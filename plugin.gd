@@ -37,14 +37,14 @@ func _handles(object):
 
 func _edit(object: Object) -> void:
 	if object == null:
-		print("Dropping SpriteFrames...")
+		# print("Dropping SpriteFrames...")
 		current_spriteframes = null
 	elif is_instance_of(object, SpriteFrames):
 		current_spriteframes = object
-		print("Got SpriteFrames directly! %s" % current_spriteframes.resource_path)
+		# print("Got SpriteFrames directly! %s" % current_spriteframes.resource_path)
 	elif is_instance_of(object, AnimatedSprite2D):
 		current_spriteframes = object.sprite_frames
-		print("Got SpriteFrames indirectly! %s" % current_spriteframes.resource_path)
+		# print("Got SpriteFrames indirectly! %s" % current_spriteframes.resource_path)
 	else:
 		push_error("Got object of unknown type: %s" % object)
 

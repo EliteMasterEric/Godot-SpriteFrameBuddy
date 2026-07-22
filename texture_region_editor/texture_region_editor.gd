@@ -304,7 +304,6 @@ func _build_interface() -> void:
 	get_ok_button().pressed.connect(_on_ok_button)
 
 func _on_ok_button() -> void:
-	print("Remember: %.2f:%.2f" % [hscroll.value, vscroll.value])
 	pan_pos_cache.set(_get_edited_object_texture().get_rid(), Vector2(hscroll.value, vscroll.value))
 	pan_zoom_cache.set(_get_edited_object_texture().get_rid(), draw_zoom)
 
